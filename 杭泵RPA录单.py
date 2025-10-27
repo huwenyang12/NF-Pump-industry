@@ -1,6 +1,8 @@
 import json
 import re
+import os
 from openpyxl import load_workbook
+from itertools import groupby
 
 def get_merged_value(ws, cell_ref):
     """读取合并单元格值"""
@@ -69,7 +71,6 @@ def parse_order_excel(file_path):
             if not text:
                 row += 1
                 continue
-                break
 
             item = {
                 "物料号": get_merged_value(ws, f"C{row}"),
@@ -85,10 +86,26 @@ def parse_order_excel(file_path):
 
         all_orders.append(order_data)
 
-    return all_orders
+    # 第二阶段：根据“工厂”分组再拆分子订单
+    grouped_orders = []
+    for order in all_orders:
+        # 使用 groupby 前要确保 items 是按工厂排序的
+        items_sorted = sorted(order["items"], key=lambda x: x["工厂"])
+        for factory, group in groupby(items_sorted, key=lambda x: x["工厂"]):
+            new_order = order.copy()
+            new_order["items"] = list(group)
+            grouped_orders.append(new_order)
+
+    return grouped_orders
 
 
 if __name__ == "__main__":
     file_path = r"D:\青臣云起\项目\南方流体模板解析\发货单.xlsx"
     result = parse_order_excel(file_path)
-    print(json.dumps(result, ensure_ascii=False, indent=4))
+
+    # 保存为 JSON 文件
+    json_path = os.path.splitext(file_path)[0] + "_result.json"
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(result, f, ensure_ascii=False, indent=4)
+
+    print(f"解析完成，结果已保存到：{json_path}")
