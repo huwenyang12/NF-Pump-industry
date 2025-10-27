@@ -3,7 +3,7 @@ import re
 from openpyxl import load_workbook
 
 def get_merged_value(ws, cell_ref):
-    """读取合并单元格值（支持跨表格合并单元格）"""
+    """读取合并单元格值"""
     cell = ws[cell_ref]
     if cell.value is not None:
         return str(cell.value).replace("\n", "")
@@ -49,13 +49,26 @@ def parse_order_excel(file_path):
         # 表格中数据从表头下一行开始
         row = start_row + 1
         while row <= ws.max_row:
-            material_no = ws[f"C{row}"].value
-            pump_model = ws[f"D{row}"].value
+            text = str(ws[f"C{row}"].value or "").strip()
 
-            # 如果读到空行或下一个“物料号”，说明子订单结束
-            if not material_no:
+            # 遇到 "是否安装调试验收" 说明子订单结束
+            if "是否安装调试验收" in text:
+                next_val = get_merged_value(ws, f"C{row + 1}")
+                order_data["是否安装调试"] = next_val
+                # 开始往下找 D 列备注1 / 备注2
+                for i in range(row + 1, row + 6):  # 往下查几行范围
+                    d_val = str(ws[f"D{i}"].value or "").strip()
+                    if "备注1" in d_val:
+                        # 提取冒号后的文字
+                        order_data["备注1"] = d_val.split("：")[-1].strip() if "：" in d_val else ""
+                    if "备注2" in d_val:
+                        order_data["备注2"] = d_val.split("：")[-1].strip() if "：" in d_val else ""
                 break
-            if not re.fullmatch(r"\d+", str(material_no).strip()):
+
+            # 跳过空行或非物料号
+            if not text:
+                row += 1
+                continue
                 break
 
             item = {
