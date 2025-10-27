@@ -1,4 +1,5 @@
 import json
+import re
 from openpyxl import load_workbook
 
 def get_merged_value(ws, cell_ref):
@@ -12,26 +13,24 @@ def get_merged_value(ws, cell_ref):
             return str(val).replace("\n", "") if val else ""
     return ""
 
+def find_all_block_starts(ws):
+    """自动扫描所有子订单起始行"""
+    block_starts = []
+    for row in range(1, ws.max_row + 1):
+        cell_val = ws[f"C{row}"].value
+        if isinstance(cell_val, str) and "物料号" in cell_val:  # 子订单表头标志
+            block_starts.append(row)
+    return block_starts
+
 def parse_order_excel(file_path):
     wb = load_workbook(file_path, data_only=True)
     ws = wb.active
 
-    all_orders = []  # 保存多个子订单
-    block_start_rows = [3]  # 第一个子订单起始行（即物料号表头所在行）
-    step = 14  # 每个子订单相隔 14 行
+    all_orders = []
+    block_starts = find_all_block_starts(ws)
 
-    # 自动判断有多少个子订单
-    max_row = ws.max_row
-    while block_start_rows[-1] + step <= max_row:
-        next_row = block_start_rows[-1] + step
-        # 如果下一个区域的C列单元格有表头（"物料号"），说明存在新子订单
-        if ws[f"C{next_row}"].value and "物料" in str(ws[f"C{next_row}"].value):
-            block_start_rows.append(next_row)
-        else:
-            break
-
-    # 遍历每个子订单区域
-    for start_row in block_start_rows:
+    for start_row in block_starts:
+        # 取相对行的值（每个子订单结构相同）
         name = get_merged_value(ws, f"B{start_row + 3}")
         receiver = get_merged_value(ws, f"J{start_row + 2}")
         is_install = get_merged_value(ws, f"C{start_row + 10}")
@@ -51,12 +50,16 @@ def parse_order_excel(file_path):
             "items": []
         }
 
-        # 解析物料行，从表头下一行开始（start_row+1）
+        # 表格中数据从表头下一行开始
         row = start_row + 1
-        while True:
+        while row <= ws.max_row:
             material_no = ws[f"C{row}"].value
             pump_model = ws[f"D{row}"].value
-            if not (material_no or pump_model):
+
+            # 如果读到空行或下一个“物料号”，说明子订单结束
+            if not material_no:
+                break
+            if not re.fullmatch(r"\d+", str(material_no).strip()):
                 break
             item = {
                 "物料号": get_merged_value(ws, f"C{row}"),
