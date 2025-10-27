@@ -17,8 +17,8 @@ def find_all_block_starts(ws):
     """自动扫描所有子订单起始行"""
     block_starts = []
     for row in range(1, ws.max_row + 1):
-        cell_val = ws[f"C{row}"].value
-        if isinstance(cell_val, str) and "物料号" in cell_val:  # 子订单表头标志
+        val = ws[f"C{row}"].value
+        if isinstance(val, str) and re.search(r"物料 *号|物料编 *号", val):
             block_starts.append(row)
     return block_starts
 
@@ -30,12 +30,8 @@ def parse_order_excel(file_path):
     block_starts = find_all_block_starts(ws)
 
     for start_row in block_starts:
-        # 取相对行的值（每个子订单结构相同）
         name = get_merged_value(ws, f"B{start_row + 3}")
         receiver = get_merged_value(ws, f"J{start_row + 2}")
-        is_install = get_merged_value(ws, f"C{start_row + 10}")
-        remark1 = get_merged_value(ws, f"D{start_row + 9}")
-        remark2 = get_merged_value(ws, f"D{start_row + 10}")
 
         order_data = {
             "销售组织": "3900",
@@ -44,9 +40,9 @@ def parse_order_excel(file_path):
             "销售组": "330",
             "名称": name,
             "收货人信息": receiver,
-            "是否安装调试": is_install,
-            "备注1": remark1,
-            "备注2": remark2,
+            "是否安装调试": "",
+            "备注1": "",
+            "备注2": "",
             "items": []
         }
 
@@ -61,6 +57,7 @@ def parse_order_excel(file_path):
                 break
             if not re.fullmatch(r"\d+", str(material_no).strip()):
                 break
+
             item = {
                 "物料号": get_merged_value(ws, f"C{row}"),
                 "水泵型号": get_merged_value(ws, f"D{row}"),
