@@ -86,15 +86,31 @@ def parse_order_excel(file_path):
 
         all_orders.append(order_data)
 
-    # 第二阶段：根据“工厂”分组再拆分子订单
+    # 第二阶段：仅当子订单中存在工厂为3900的物料时进行拆分
     grouped_orders = []
     for order in all_orders:
-        # 使用 groupby 前要确保 items 是按工厂排序的
-        items_sorted = sorted(order["items"], key=lambda x: x["工厂"])
-        for factory, group in groupby(items_sorted, key=lambda x: x["工厂"]):
-            new_order = order.copy()
-            new_order["items"] = list(group)
-            grouped_orders.append(new_order)
+        items = order["items"]
+        has_3900 = any(item["工厂"] == "3900" for item in items)
+
+        if has_3900:
+            # 拆成两个子订单：一个是3900，一个是其他工厂
+            items_3900 = [i for i in items if i["工厂"] == "3900"]
+            items_other = [i for i in items if i["工厂"] != "3900"]
+
+            # 工厂=3900的单独一个子订单
+            if items_3900:
+                new_order_3900 = order.copy()
+                new_order_3900["items"] = items_3900
+                grouped_orders.append(new_order_3900)
+
+            # 其他工厂的全部合并为一个
+            if items_other:
+                new_order_other = order.copy()
+                new_order_other["items"] = items_other
+                grouped_orders.append(new_order_other)
+        else:
+            # 没有3900工厂，不拆分
+            grouped_orders.append(order)
 
     return grouped_orders
 
