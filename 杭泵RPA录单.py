@@ -2,7 +2,6 @@ import json
 import re
 import os
 from openpyxl import load_workbook
-from itertools import groupby
 
 def get_merged_value(ws, cell_ref):
     """读取合并单元格值"""
@@ -36,6 +35,7 @@ def parse_order_excel(file_path):
         receiver = get_merged_value(ws, f"J{start_row + 2}")
 
         order_data = {
+            "订单类型": "",
             "销售组织": "3900",
             "分销渠道": "10",
             "产品组": "10",
@@ -111,6 +111,16 @@ def parse_order_excel(file_path):
         else:
             # 没有3900工厂，不拆分
             grouped_orders.append(order)
+
+    # 第三阶段：根据工厂编号判断订单类型
+    for order in grouped_orders:
+        factories = {item["工厂"] for item in order["items"]}
+        if factories == {"3900"}:
+            order["订单类型"] = "Z001"
+        elif factories.issubset({"1073", "1079", "3520"}):
+            order["订单类型"] = "Z007"
+        else:
+            raise Exception(f"未知的工厂编号: {factories}")
 
     return grouped_orders
 
