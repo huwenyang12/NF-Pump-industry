@@ -32,7 +32,7 @@ def parse_order_excel(file_path):
 
     for start_row in block_starts:
         name = get_merged_value(ws, f"B{start_row + 3}")
-        receiver = get_merged_value(ws, f"J{start_row + 2}")
+        receiver = get_merged_value(ws, f"J{start_row + 3}")
 
         order_data = {
             "订单类型": "",
