@@ -1,7 +1,20 @@
 import json
 import re
 import os
+import copy
 from openpyxl import load_workbook
+from datetime import datetime, timedelta
+
+def excel_date_to_str(value):
+    """将Excel数字日期或datetime对象转成字符串格式 2025.11.07"""
+    if isinstance(value, (int, float)):  # Excel日期序号
+        date = datetime(1899, 12, 30) + timedelta(days=value)  # Excel起始偏移
+        return date.strftime("%Y.%m.%d")
+    elif isinstance(value, datetime):
+        return value.strftime("%Y.%m.%d")
+    else:
+        return str(value)
+
 
 def get_merged_value(ws, cell_ref):
     """读取合并单元格值"""
@@ -31,6 +44,7 @@ def parse_order_excel(file_path):
     block_starts = find_all_block_starts(ws)
 
     for start_row in block_starts:
+        bianhao = get_merged_value(ws, f"A{start_row + 3}")
         name = get_merged_value(ws, f"B{start_row + 3}")
         receiver = get_merged_value(ws, f"J{start_row + 3}")
 
@@ -40,6 +54,7 @@ def parse_order_excel(file_path):
             "分销渠道": "10",
             "产品组": "10",
             "销售组": "330",
+            "编号": bianhao,
             "名称": name,
             "收货人信息": receiver,
             "是否安装调试": "",
@@ -79,8 +94,11 @@ def parse_order_excel(file_path):
                 "数量": get_merged_value(ws, f"F{row}"),
                 "单价": get_merged_value(ws, f"G{row}"),
                 "金额": get_merged_value(ws, f"H{row}"),
-                "交期": get_merged_value(ws, f"I{row}")
             }
+            # 获取交期列，并格式化日期
+            raw_jiaoqi = ws[f"I{row}"].value
+            item["交期"] = excel_date_to_str(raw_jiaoqi)
+
             order_data["items"].append(item)
             row += 1
 
@@ -99,13 +117,13 @@ def parse_order_excel(file_path):
 
             # 工厂=3900的单独一个子订单
             if items_3900:
-                new_order_3900 = order.copy()
+                new_order_3900 = copy.deepcopy(order)
                 new_order_3900["items"] = items_3900
                 grouped_orders.append(new_order_3900)
 
             # 其他工厂的全部合并为一个
             if items_other:
-                new_order_other = order.copy()
+                new_order_other = copy.deepcopy(order)
                 new_order_other["items"] = items_other
                 grouped_orders.append(new_order_other)
         else:
@@ -114,19 +132,22 @@ def parse_order_excel(file_path):
 
     # 第三阶段：根据工厂编号判断订单类型
     for order in grouped_orders:
-        factories = {item["工厂"] for item in order["items"]}
+        factories = {str(item.get("工厂", "")).strip() for item in order["items"]}
+        factories = {f for f in factories if f}  # 去掉空白
+        order["订单类型"] = ""  # 默认空
+
         if factories == {"3900"}:
             order["订单类型"] = "Z001"
         elif factories.issubset({"1073", "1079", "3520"}):
             order["订单类型"] = "Z007"
         else:
-            raise Exception(f"未知的工厂编号: {factories}")
+            print(f"未知的工厂编号: {factories}")
 
     return grouped_orders
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\发货单.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\南泵流体福州办发货通知单-测试.xlsx"
     result = parse_order_excel(file_path)
 
     # 保存为 JSON 文件
