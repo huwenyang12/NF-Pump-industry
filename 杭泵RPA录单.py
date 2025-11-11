@@ -6,14 +6,37 @@ from openpyxl import load_workbook
 from datetime import datetime, timedelta
 
 def excel_date_to_str(value):
-    """将Excel数字日期或datetime对象转成字符串格式 2025.11.07"""
-    if isinstance(value, (int, float)):  # Excel日期序号
-        date = datetime(1899, 12, 30) + timedelta(days=value)  # Excel起始偏移
+    """将Excel日期或字符串日期统一转换为 2025.11.07 格式"""
+    if not value:
+        return ""
+
+    # 数字日期（Excel序号）
+    if isinstance(value, (int, float)):
+        date = datetime(1899, 12, 30) + timedelta(days=value)
         return date.strftime("%Y.%m.%d")
-    elif isinstance(value, datetime):
+
+    # datetime 类型
+    if isinstance(value, datetime):
         return value.strftime("%Y.%m.%d")
-    else:
-        return str(value)
+
+    # 字符串类型，尝试匹配中文或横线日期
+    if isinstance(value, str):
+        text = value.strip()
+        # 中文年月日
+        m = re.match(r"(\d{4})年(\d{1,2})月(\d{1,2})日", text)
+        if m:
+            y, mth, d = m.groups()
+            return f"{int(y):04d}.{int(mth):02d}.{int(d):02d}"
+        # 横线或斜杠格式 2025-11-10 / 2025/11/10
+        m = re.match(r"(\d{4})[-/\.](\d{1,2})[-/\.](\d{1,2})", text)
+        if m:
+            y, mth, d = m.groups()
+            return f"{int(y):04d}.{int(mth):02d}.{int(d):02d}"
+        # 否则直接返回
+        return text
+
+    return str(value)
+
 
 
 def get_merged_value(ws, cell_ref):
@@ -57,6 +80,7 @@ def parse_order_excel(file_path):
             "编号": bianhao,
             "名称": name,
             "收货人信息": receiver,
+            "最久交期":"",
             "是否安装调试": "",
             "备注1": "",
             "备注2": "",
@@ -73,7 +97,7 @@ def parse_order_excel(file_path):
                 next_val = get_merged_value(ws, f"C{row + 1}")
                 order_data["是否安装调试"] = next_val
                 # 开始往下找 D 列备注1 / 备注2
-                for i in range(row + 1, row + 6):  # 往下查几行范围
+                for i in range(row, row + 3):  # 往下查几行范围
                     d_val = str(ws[f"D{i}"].value or "").strip()
                     if "备注1" in d_val:
                         # 提取冒号后的文字
@@ -130,6 +154,17 @@ def parse_order_excel(file_path):
             # 没有3900工厂，不拆分
             grouped_orders.append(order)
 
+    # 计算最久交期
+    for order in grouped_orders:
+        latest = ""
+        for item in order["items"]:
+            val = item.get("交期", "")
+            if val and val.lower() != "none":
+                if latest == "" or val > latest:
+                    latest = val
+        order["最久交期"] = latest
+
+
     # 第三阶段：根据工厂编号判断订单类型
     for order in grouped_orders:
         factories = {str(item.get("工厂", "")).strip() for item in order["items"]}
@@ -147,12 +182,10 @@ def parse_order_excel(file_path):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\南泵流体福州办发货通知单-测试.xlsx"
-    result = parse_order_excel(file_path)
-
-    # 保存为 JSON 文件
-    json_path = os.path.splitext(file_path)[0] + "_result.json"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\福州办-2025-11-07-05-华膜陈佳明华南23170+其他143292发货单.xlsx"
+    json数据解析 = parse_order_excel(file_path)
+    json_path = os.path.join(os.path.dirname(file_path), "json数据解析.json")
     with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=4)
+        json.dump(json数据解析, f, ensure_ascii=False, indent=4)
+    print("解析完成")
 
-    print(f"解析完成，结果已保存到：{json_path}")
