@@ -8,21 +8,33 @@ from typing import List
 class Solution:
 
     def __init__(self):
-        self.nums = [3,7,11,6]
-        self.target = 9
         pass
 
     def twoSum_1(self, nums: List[int], target: int) -> List[int]:
         for i in range(len(nums)):
             for j in range(i+1,len(nums)):
                 if nums[i] + nums[j] == target:
-                    return [i ,j]
-                
+                    return[i, j]
+    
+    def twoSum_2(self, nums: List[int], target: int) -> List[int]:
+        data = {}
+        for idx,value in enumerate(nums):
+            a = target - value
+            if a in data:
+                return[data[a],idx]
+            data[value] = idx
+        return []
+
 
 
 if __name__ == "__main__":
+    nums = [3,7,11,6]
+    target = 9
+
     obj = Solution()
-    obj.twoSum_1()
+    list = obj.twoSum_2(nums,target)
+
+    print(list)
 
 
 # 

@@ -171,6 +171,12 @@ def parse_order_excel(file_path):
         factories = {f for f in factories if f}  # 去掉空白
         order["订单类型"] = ""  # 默认空
 
+        # 没有工厂信息，直接标记为未知
+        if not factories:
+            print(f"工厂为空，无法判断订单类型: 编号={order['编号']}")
+            order["订单类型"] = ""
+            continue
+
         if factories == {"3900"}:
             order["订单类型"] = "Z001"
         elif factories.issubset({"1073", "1079", "3520"}):
@@ -182,7 +188,7 @@ def parse_order_excel(file_path):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\福州办-2025-11-07-05-华膜陈佳明华南23170+其他143292发货单.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\南泵流体福州办发货通知单-测试.xlsx"
     json数据解析 = parse_order_excel(file_path)
     json_path = os.path.join(os.path.dirname(file_path), "json数据解析.json")
     with open(json_path, "w", encoding="utf-8") as f:
