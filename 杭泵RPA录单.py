@@ -37,6 +37,22 @@ def excel_date_to_str(value):
 
     return str(value)
 
+def find_info_row(ws, start_row):
+    """
+    找到编号/客户名称所在的行（物料下面第一行非物料号）
+    """
+    row = start_row + 1
+    while row <= ws.max_row:
+        c = str(ws[f"C{row}"].value or "").strip()
+        a = str(ws[f"A{row}"].value or "").strip()
+
+        # 物料号区：C列有值；信息区：C列为空而A列有文本
+        if c == "" and a != "":
+            return row
+        row += 1
+
+    return start_row + 2  #保底，兼容你当前模板
+
 
 
 def get_merged_value(ws, cell_ref):
@@ -47,7 +63,7 @@ def get_merged_value(ws, cell_ref):
     for merged in ws.merged_cells.ranges:
         if cell.coordinate in merged:
             val = ws.cell(merged.min_row, merged.min_col).value
-            return str(val).replace("\n", "") if val else ""
+            return str(val).replace("\n", "").replace(" ","") if val else ""
     return ""
 
 def find_all_block_starts(ws):
@@ -67,9 +83,11 @@ def parse_order_excel(file_path):
     block_starts = find_all_block_starts(ws)
 
     for start_row in block_starts:
-        bianhao = get_merged_value(ws, f"A{start_row + 3}")
-        name = get_merged_value(ws, f"B{start_row + 3}")
-        receiver = get_merged_value(ws, f"J{start_row + 3}")
+        info_row = find_info_row(ws, start_row)
+        bianhao = get_merged_value(ws, f"A{info_row}")
+        name = get_merged_value(ws, f"B{info_row}")
+        receiver = get_merged_value(ws, f"J{start_row + 1}")
+
 
         order_data = {
             "订单类型": "",
@@ -99,11 +117,14 @@ def parse_order_excel(file_path):
                 # 开始往下找 D 列备注1 / 备注2
                 for i in range(row, row + 3):  # 往下查几行范围
                     d_val = str(ws[f"D{i}"].value or "").strip()
+                    d_val = d_val.replace(":", "：")
                     if "备注1" in d_val:
-                        # 提取冒号后的文字
-                        order_data["备注1"] = d_val.split("：")[-1].strip() if "：" in d_val else ""
+                        # split("：", 1) 表示只切分第一个冒号，[1] 取冒号后面的所有内容
+                        parts = d_val.split("：", 1)
+                        order_data["备注1"] = parts[1].strip() if len(parts) > 1 else ""
                     if "备注2" in d_val:
-                        order_data["备注2"] = d_val.split("：")[-1].strip() if "：" in d_val else ""
+                        parts = d_val.split("：", 1)
+                        order_data["备注2"] = parts[1].strip() if len(parts) > 1 else ""
                 break
 
             # 跳过空行或非物料号
@@ -188,7 +209,7 @@ def parse_order_excel(file_path):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\南泵流体福州办发货通知单-测试.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\杭泵成都办2025-12-01-04四川比佰特环保科技有限公司+发货单  .xlsx"
     json数据解析 = parse_order_excel(file_path)
     json_path = os.path.join(os.path.dirname(file_path), "json数据解析.json")
     with open(json_path, "w", encoding="utf-8") as f:
