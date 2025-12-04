@@ -75,6 +75,13 @@ def find_all_block_starts(ws):
             block_starts.append(row)
     return block_starts
 
+def extract_remark(text):
+    # 去掉“备注X”开头
+    content = re.sub(r"^备注\d+\s*[:：;；]\s*", "", text).strip()
+    if content == "" or content in [";", "；", ":", "："]:
+        return ""
+    return content
+
 def parse_order_excel(file_path):
     wb = load_workbook(file_path, data_only=True)
     ws = wb.active
@@ -117,14 +124,11 @@ def parse_order_excel(file_path):
                 # 开始往下找 D 列备注1 / 备注2
                 for i in range(row, row + 3):  # 往下查几行范围
                     d_val = str(ws[f"D{i}"].value or "").strip()
-                    d_val = d_val.replace(":", "：")
                     if "备注1" in d_val:
-                        # split("：", 1) 表示只切分第一个冒号，[1] 取冒号后面的所有内容
-                        parts = d_val.split("：", 1)
-                        order_data["备注1"] = parts[1].strip() if len(parts) > 1 else ""
+                        order_data["备注1"] = extract_remark(d_val)
+
                     if "备注2" in d_val:
-                        parts = d_val.split("：", 1)
-                        order_data["备注2"] = parts[1].strip() if len(parts) > 1 else ""
+                        order_data["备注2"] = extract_remark(d_val)
                 break
 
             # 跳过空行或非物料号
@@ -209,7 +213,8 @@ def parse_order_excel(file_path):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\杭泵成都办2025-12-01-04四川比佰特环保科技有限公司+发货单  .xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\杭泵上海办-25.12..2华6-发货单.xlsx"
+    # file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\南泵流体东莞二部发货单-2025-11-25-04-博易盛-黄忠 15420.xlsx"
     json数据解析 = parse_order_excel(file_path)
     json_path = os.path.join(os.path.dirname(file_path), "json数据解析.json")
     with open(json_path, "w", encoding="utf-8") as f:
