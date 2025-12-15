@@ -30,6 +30,13 @@ def get_merge(ws, cell):
 
 
 def parse_order_excel(file_path):
+    # ---- 格式校验：禁止 xls ----
+    ext = os.path.splitext(file_path)[1].lower()
+    if ext == ".xls":
+        raise ValueError("不支持 .xls 格式，请另存为 .xlsx 后再上传")
+    if ext != ".xlsx":
+        raise ValueError(f"不支持的文件格式：{ext}，仅支持 .xlsx")
+    
     wb = load_workbook(file_path, data_only=True)
     ws = wb.active
 
@@ -101,4 +108,4 @@ if __name__ == "__main__":
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=4)
 
-    print("解析完成，模板专用稳定版")
+    print(f"解析完成：{out_path}")
