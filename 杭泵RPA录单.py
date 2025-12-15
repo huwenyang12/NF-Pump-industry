@@ -93,7 +93,7 @@ def parse_order_excel(file_path):
         info_row = find_info_row(ws, start_row)
         bianhao = get_merged_value(ws, f"A{info_row}")
         name = get_merged_value(ws, f"B{info_row}")
-        receiver = get_merged_value(ws, f"J{start_row + 1}")
+        receiver = get_merged_value(ws, f"K{start_row + 1}")
 
 
         order_data = {
@@ -107,7 +107,6 @@ def parse_order_excel(file_path):
             "收货人信息": receiver,
             "最久交期":"",
             "是否安装调试": "",
-            "备注1": "",
             "备注2": "",
             "items": []
         }
@@ -121,12 +120,9 @@ def parse_order_excel(file_path):
             if "是否安装调试验收" in text:
                 next_val = get_merged_value(ws, f"C{row + 1}")
                 order_data["是否安装调试"] = next_val
-                # 开始往下找 D 列备注1 / 备注2
+                # 开始往下找 D 列备注1 
                 for i in range(row, row + 3):  # 往下查几行范围
                     d_val = str(ws[f"D{i}"].value or "").strip()
-                    if "备注1" in d_val:
-                        order_data["备注1"] = extract_remark(d_val)
-
                     if "备注2" in d_val:
                         order_data["备注2"] = extract_remark(d_val)
                 break
@@ -143,6 +139,7 @@ def parse_order_excel(file_path):
                 "数量": get_merged_value(ws, f"F{row}"),
                 "单价": get_merged_value(ws, f"G{row}"),
                 "金额": get_merged_value(ws, f"H{row}"),
+                "备注1": get_merged_value(ws, f"J{row}"),
             }
             # 获取交期列，并格式化日期
             raw_jiaoqi = ws[f"I{row}"].value
@@ -213,8 +210,7 @@ def parse_order_excel(file_path):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\杭泵上海办-25.12..2华6-发货单.xlsx"
-    # file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\南泵流体东莞二部发货单-2025-11-25-04-博易盛-黄忠 15420.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\杭泵苏州办2025-12-04-05-苏州市创联净化设备有限公司 - 测试发货单.xlsx"
     json数据解析 = parse_order_excel(file_path)
     json_path = os.path.join(os.path.dirname(file_path), "json数据解析.json")
     with open(json_path, "w", encoding="utf-8") as f:
