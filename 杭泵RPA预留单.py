@@ -16,7 +16,7 @@ def excel_date_to_str(v):
 
 def is_block_header(ws, row):
     """判断是否为订单区块表头行"""
-    return (str(ws[f"A{row}"].value).strip() == "订单类型" and str(ws[f"C{row}"].value).strip() == "物料编号")
+    return (str(ws[f"A{row}"].value).strip() == "编号" and str(ws[f"C{row}"].value).strip() == "物料编号")
 
 def get_merge(ws, cell):
     """读取合并单元格"""
@@ -77,7 +77,7 @@ def parse_order_excel(file_path):
                 continue
 
             item = {
-                "物料编码": str(material),
+                "物料编号": str(material),
                 "水泵型号": model,
                 "数量": str(ws[f"E{r}"].value or "0"),
                 "单价": str(ws[f"F{r}"].value or "0"),
@@ -101,7 +101,7 @@ def parse_order_excel(file_path):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\流体东莞办发货通知单-2025-12-15.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\新_杭泵苏州办发货通知单-2025-12-16-01.xlsx"
     result = parse_order_excel(file_path)
 
     out_path = os.path.join(os.path.dirname(file_path), "json数据解析.json")
