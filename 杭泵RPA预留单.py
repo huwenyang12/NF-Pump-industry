@@ -85,7 +85,7 @@ def parse_order_excel(file_path):
                 "交期": excel_date_to_str(ws[f"H{r}"].value),
                 "工厂": str(ws[f"I{r}"].value or "0"),
                 "库存地点": str(ws[f"J{r}"].value or ""),
-                "营销仓库位号": str(ws[f"K{r}"].value or "")
+                "发货存储地点": str(ws[f"K{r}"].value or "")
             }
 
             order["items"].append(item)
@@ -101,7 +101,7 @@ def parse_order_excel(file_path):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\新_杭泵苏州办发货通知单-2025-12-16-01.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\杭泵东莞营销仓预留单-2025-12-16-01.xlsx"
     result = parse_order_excel(file_path)
 
     out_path = os.path.join(os.path.dirname(file_path), "json数据解析.json")
