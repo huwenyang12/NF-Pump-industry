@@ -13,8 +13,8 @@ MAIL_ACCOUNTS = {
     },
     "2": {
         "name": "售后 robot2",
-        "email": "nblt-xsdd-zdrd2@nanfang-pump.com",
-        "password": "E7vqaZTVj5JkbSte",
+        "email": "db-shfw-zdrd2@nanfang-pump.com",
+        "password": "t8rY7myVKS1j3@3k",
     },
     "3": {
         "name": "售后 robot3",
