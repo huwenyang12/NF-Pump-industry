@@ -90,7 +90,7 @@ def parse_order_excel(file_path):
     block_starts = find_all_block_starts(ws)
 
     for start_row in block_starts:
-        info_row = find_info_row(ws, start_row)
+        info_row = start_row + 1
         bianhao = get_merged_value(ws, f"A{info_row}")
         name = get_merged_value(ws, f"B{info_row}")
         receiver = get_merged_value(ws, f"K{start_row + 1}")
@@ -210,7 +210,8 @@ def parse_order_excel(file_path):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\杭泵苏州办2025-12-04-05-苏州市创联净化设备有限公司 - 测试发货单.xlsx"
+    # file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\杭泵苏州办2025-12-04-05-苏州市创联净化设备有限公司 - 测试发货单.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\杭泵成都办2025-12-24-02成都美森威尔冷冻设备有限公司-发货通知单 .xlsx"
     json数据解析 = parse_order_excel(file_path)
     json_path = os.path.join(os.path.dirname(file_path), "json数据解析.json")
     with open(json_path, "w", encoding="utf-8") as f:

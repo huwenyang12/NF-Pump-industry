@@ -19,7 +19,7 @@ MAIL_ACCOUNTS = {
     "3": {
         "name": "售后 robot3",
         "email": "db-shfw-thd@nanfang-pump.com",
-        "password": "JgqQh8#BpTmpy7h1",
+        "password": "cQ5z#Fg97vV6jsae",
     },
     "4": {
         "name": "南方流体 robot2",

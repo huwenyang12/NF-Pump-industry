@@ -101,7 +101,7 @@ def parse_order_excel(file_path):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\杭泵东莞营销仓预留单-2025-12-16-01.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\杭泵云南办事处仓发货单-预留单2025-12-16-01(1).XLSX"
     result = parse_order_excel(file_path)
 
     out_path = os.path.join(os.path.dirname(file_path), "json数据解析.json")
