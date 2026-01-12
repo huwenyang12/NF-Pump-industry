@@ -63,12 +63,6 @@ def parse_order_excel(file_path):
         info_row = start_row + 1
         quote = get_merged_value(ws, f"A{info_row}")       # 是否引用
         quote = str(quote).strip()
-        if quote == "是":
-            quote = True
-        elif quote == "否":
-            quote = False
-        else:
-            raise ValueError(f"无法识别是否引用字段内容：{quote}")
         no = get_merged_value(ws, f"B{info_row}")          # 订单号
         sales_reach = get_merged_value(ws, f"C{info_row}")  # 库位
         kuwei = get_merged_value(ws, f"D{info_row}")  # 库位
@@ -158,7 +152,7 @@ def parse_order_excel(file_path):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\新_引用不引用退货单模板.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\文件\20260112引用不引用退货单模板--订单.xlsx"
     data = parse_order_excel(file_path)
 
     json_path = os.path.join(os.path.dirname(file_path), "json数据解析.json")
