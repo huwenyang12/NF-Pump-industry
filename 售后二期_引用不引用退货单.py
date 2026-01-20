@@ -81,7 +81,11 @@ def parse_order_excel(file_path: str):
         office = get_merged_value(ws, f"D{row}")                    # 销售办事处
         customer_ref = get_merged_value(ws, f"E{row}")              # 客户参考/抬头
 
-        group_key = (str(no or "").strip(), str(sold_to or "").strip())
+        no_s = str(no or "").strip()
+        sold_to_s = str(sold_to or "").strip()
+        customer_ref_s = str(customer_ref or "").strip()
+
+        group_key = (no_s, sold_to_s, customer_ref_s)
 
         # 初始化订单对象（第一次见到这个 key）
         if group_key not in grouped:
@@ -124,9 +128,10 @@ def parse_order_excel(file_path: str):
             "订单数量": get_merged_value(ws, f"J{row}"),
             "金额": get_merged_value(ws, f"K{row}"),
             "工厂": get_merged_value(ws, f"L{row}"),
-            "采购订单编号": get_merged_value(ws, f"M{row}"),
-            "拒绝原因": get_merged_value(ws, f"N{row}"),
-            "显示抬头详细信息": get_merged_value(ws, f"O{row}"),
+            "贵方参考": get_merged_value(ws, f"M{row}"),
+            "采购订单编号": get_merged_value(ws, f"N{row}"),
+            "拒绝原因": get_merged_value(ws, f"O{row}"),
+            "显示抬头详细信息": get_merged_value(ws, f"P{row}"),
             "物料文本": get_merged_value(ws, f"P{row}"),
         }
 
@@ -161,11 +166,11 @@ def parse_order_excel(file_path: str):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\\青臣云起\\项目\\南方流体模板解析\\文件\\20260113引用不引用退货单模板--订单.xlsx"
+    file_path = r"模板\202601119引用不引用退货单模板--订单-03.xlsx"
     data = parse_order_excel(file_path)
 
     json_path = os.path.join(os.path.dirname(file_path), "json数据解析.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    print("解析文件完成，订单数：", len(data))
+    print(f"解析文件完成{json_path}，订单数：{len(data)}")

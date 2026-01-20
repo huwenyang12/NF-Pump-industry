@@ -22,21 +22,22 @@ def parse_purchase_excel(file_path: str):
     """
 
     HEAD_COLS = {
-        "供应商编号": "A",
-        "供应商": "B",
+        "客户参考": "A",
+        "售达方编码": "B",
+        "CRM号": "C",
     }
 
     ITEM_COLS = {
-        "物料号": "C",
-        "配件型号": "D",
-        "工厂": "E",
-        "库存地点": "F",
-        "数量": "G",
-        "净价": "H",
-        "金额": "I",
-        "税码": "J",
-        "物料文本": "K",
-        "物料采购订单文本": "L",
+        "物料编码": "D",
+        "物料名称": "E",
+        "数量": "F",
+        "单价": "G",
+        "金额": "H",
+        "销售办事处": "I",
+        "类别": "J",
+        "工厂": "K",
+        "库位": "L",
+        "拒绝原因": "M",
     }
 
     wb = load_workbook(file_path, data_only=True)
@@ -51,20 +52,20 @@ def parse_purchase_excel(file_path: str):
     remark2 = ""
 
     for r in range(start_row, ws.max_row + 1):
-        d_val = _cell_str(ws[f"D{r}"].value)
+        d_val = _cell_str(ws[f"E{r}"].value)
         # 找到D 列的 “备注2”
         if "备注2" in d_val:
             stop_row = r
-            # 是否调试安装
-            is_install = _cell_str(ws.cell(row=r, column=3).value)  # r行3列
+            # 用户状态签收
+            is_install = _cell_str(ws.cell(row=r, column=4).value)  # r行3列
             # 备注1
-            remark1 = _cell_str(ws.cell(row=r - 1, column=5).value)  # r-1行5列
+            remark1 = _cell_str(ws.cell(row=r - 1, column=9).value)  # r-1行5列
             # 备注2
-            remark2 = _cell_str(ws.cell(row=r, column=5).value)  # r行5列
+            remark2 = _cell_str(ws.cell(row=r, column=9).value)  # r行5列
             break
 
     common_head = {
-        "是否安装调试": is_install,
+        "用户签收状态": is_install,
         "备注1": remark1,
         "备注2": remark2,
     }
@@ -73,8 +74,8 @@ def parse_purchase_excel(file_path: str):
 
     # 2. 正式读取数据行：读到 备注2 即 stop_row-1 截至
     for r in range(start_row, stop_row):
-        supplier_code = _cell_str(ws[f"{HEAD_COLS['供应商编号']}{r}"].value)
-        supplier_name = _cell_str(ws[f"{HEAD_COLS['供应商']}{r}"].value)
+        supplier_code = _cell_str(ws[f"{HEAD_COLS['客户参考']}{r}"].value)
+        supplier_name = _cell_str(ws[f"{HEAD_COLS['售达方编码']}{r}"].value)
 
         if not supplier_code and not supplier_name:
             continue
@@ -84,12 +85,14 @@ def parse_purchase_excel(file_path: str):
         # 初始化分单
         if key not in results_map:
             results_map[key] = {
-                "供应商编号": supplier_code,
-                "供应商": supplier_name,
-                "订单类型": "跨公司转储",
-                "采购组织": "1002",
-                "采购组": "W01",
-                "公司代码": "1000",
+                "订单类型": "Z009",
+                "销售组织": "1072",
+                "分销渠道": "10",
+                "产品组": "10",
+                "销售办事处": "1000",
+                "销售组": "270",
+                "客户参考": supplier_code,
+                "售达方编码": supplier_name,
                 **common_head,   # 个订单头都带上
                 "items": []
             }
@@ -97,7 +100,7 @@ def parse_purchase_excel(file_path: str):
         item = {}
         for field, col_letter in ITEM_COLS.items():
             item[field] = _cell_str(ws[f"{col_letter}{r}"].value)
-        if not item.get("物料号"):
+        if not item.get("物料编码"):
             continue
         results_map[key]["items"].append(item)
 
@@ -105,12 +108,12 @@ def parse_purchase_excel(file_path: str):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\模板\20260115跨公司退货单模板--模板.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\模板\20260115三包配件与电机入库--模板.xlsx"
     data = parse_purchase_excel(file_path)
     out_path = os.path.splitext(file_path)[0] + "_解析结果.json"
 
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-    print(f"解析完成，共 {len(data)} 个供应商分单")
+    print(f"解析完成，共 {len(data)} 个分单")
     print(f"解析结果写入：{out_path}")
