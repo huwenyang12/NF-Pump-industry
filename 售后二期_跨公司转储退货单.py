@@ -105,7 +105,7 @@ def parse_purchase_excel(file_path: str):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\模板\20260115跨公司退货单模板--模板.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\模板\跨公司转储退货单--模板.xlsx"
     data = parse_purchase_excel(file_path)
     out_path = os.path.splitext(file_path)[0] + "_解析结果.json"
 

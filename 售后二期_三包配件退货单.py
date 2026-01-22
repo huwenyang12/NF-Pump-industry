@@ -76,11 +76,12 @@ def parse_purchase_excel(file_path: str):
     for r in range(start_row, stop_row):
         supplier_code = _cell_str(ws[f"{HEAD_COLS['客户参考']}{r}"].value)
         supplier_name = _cell_str(ws[f"{HEAD_COLS['售达方编码']}{r}"].value)
+        supplier_crmno = _cell_str(ws[f"{HEAD_COLS['CRM号']}{r}"].value)
 
-        if not supplier_code and not supplier_name:
+        if not supplier_code and not supplier_name and not supplier_crmno:
             continue
         # 组成分单 Key
-        key = f"{supplier_code}_{supplier_name}"
+        key = f"{supplier_code}_{supplier_name}_{supplier_crmno}"
 
         # 初始化分单
         if key not in results_map:
@@ -93,6 +94,7 @@ def parse_purchase_excel(file_path: str):
                 "销售组": "270",
                 "客户参考": supplier_code,
                 "售达方编码": supplier_name,
+                "CRM号": supplier_crmno,
                 **common_head,   # 个订单头都带上
                 "items": []
             }
@@ -108,7 +110,7 @@ def parse_purchase_excel(file_path: str):
 
 
 if __name__ == "__main__":
-    file_path = r"D:\青臣云起\项目\南方流体模板解析\模板\20260115三包配件与电机入库--模板.xlsx"
+    file_path = r"D:\青臣云起\项目\南方流体模板解析\模板\三包配件与电机入库退货单--模板.xlsx"
     data = parse_purchase_excel(file_path)
     out_path = os.path.splitext(file_path)[0] + "_解析结果.json"
 
